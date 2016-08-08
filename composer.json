@@ -1,0 +1,23 @@
+{
+    "name": "vkr/symfony-web-uploader",
+    "type": "library",
+    "description": "PHP library that simplifies file uploading process to external APIs",
+    "keywords": ["api", "php", "upload", "laravel", "drupal8", "symfony2", "symfony3"],
+    "homepage": "https://github.com/wladislavk/SymfonyWebUploader",
+    "license": "MIT",
+    "authors": [
+        {"name": "Vladislav Kryshtanovskiy", "email": "wladislav.k@gmail.com"}
+    ],
+    "require": {
+        "php": ">=5.6",
+        "symfony/http-foundation": "~2.8|~3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "VKR\\SymfonyWebUploader\\": ""
+        }
+    }
+}
