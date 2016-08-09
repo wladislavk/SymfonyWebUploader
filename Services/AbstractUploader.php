@@ -137,15 +137,19 @@ abstract class AbstractUploader
     {
         $uploadedFileUrl = $this->uploadURL . '/' . $this->filename;
         $data = $this->getHeaders($uploadedFileUrl, 1);
-        $exceptionMessage = 'File did not upload correctly';
+        $exceptionMessage = "File $uploadedFileUrl did not upload correctly: ";
         if (!isset($data['Content-Length']) || !isset($data['Content-Type'])) {
-            throw new FileException($exceptionMessage);
+            throw new FileException($exceptionMessage . 'no file found in destination');
         }
         if (!$data['Content-Length'] || $data['Content-Length'] != $this->file->getSize()) {
-            throw new FileException($exceptionMessage);
+            throw new FileException(
+                $exceptionMessage . "destination size is {$data['Content-Length']} while original size is {$this->file->getSize()}"
+            );
         }
         if (!$data['Content-Type'] || $data['Content-Type'] != $this->file->getMimeType()) {
-            throw new FileException($exceptionMessage);
+            throw new FileException(
+                $exceptionMessage . "destination type is {$data['Content-Type']} while original type is {$this->file->getMimeType()}"
+            );
         }
         return true;
     }
