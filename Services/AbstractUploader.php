@@ -90,6 +90,14 @@ abstract class AbstractUploader
     }
 
     /**
+     * @return string
+     */
+    public function getNewFilename()
+    {
+        return $this->filename;
+    }
+
+    /**
      * Checks for file MIME type and duration
      *
      * @param File $file
