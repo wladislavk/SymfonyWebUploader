@@ -1,19 +1,20 @@
 <?php
 namespace VKR\SymfonyWebUploader\Tests\Services;
 
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use VKR\SettingsBundle\Services\SettingsRetriever;
 use VKR\SymfonyWebUploader\Decorators\GetHeadersDecorator;
 use VKR\SymfonyWebUploader\TestHelpers\DummyNameChanger;
 use VKR\SymfonyWebUploader\TestHelpers\DummyUploader;
 
-class UploaderTest extends \PHPUnit_Framework_TestCase
+class UploaderTest extends TestCase
 {
     const SOURCE_DIR = __DIR__ . '/../../TestHelpers/static/source/';
-    const SETTINGS_CLASS_NAME = 'VKR\SettingsBundle\Services\SettingsRetriever';
 
-    protected $settings = [
+    private $settings = [
         'destination_dir' => __DIR__ . '/../../TestHelpers/static/destination/',
         'allowed_upload_size' => '1000',
         'allowed_upload_types' => [
@@ -23,47 +24,39 @@ class UploaderTest extends \PHPUnit_Framework_TestCase
     ];
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $settingsRetriever;
-
-    /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $decorator;
-
-    /**
      * @var DummyUploader
      */
-    protected $dummyUploader;
+    private $dummyUploader;
 
     public function setUp()
     {
-        $this->mockGetHeadersDecorator();
-        $this->dummyUploader = new DummyUploader(null, $this->settings, $this->decorator);
+        $decorator = $this->mockGetHeadersDecorator();
+        $this->dummyUploader = new DummyUploader(null, $this->settings, $decorator);
     }
 
     public function testInitializationWithoutSettings()
     {
-        $this->setExpectedException(\RuntimeException::class, 'Either $settingsRetriever or $settings must be defined');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Either $settingsRetriever or $settings must be defined');
         $dummyUploader = new DummyUploader();
     }
 
     public function testInitializationWithSettingsObject()
     {
-        if (!class_exists(self::SETTINGS_CLASS_NAME)) {
+        if (!class_exists(SettingsRetriever::class)) {
             return;
         }
-        $this->mockSettingsRetriever();
-        $dummyUploader = new DummyUploader($this->settingsRetriever, [], $this->decorator);
-        /** @noinspection PhpUndefinedMethodInspection */
-        $this->assertEquals('1000', $this->settingsRetriever->get('allowed_upload_size'));
+        $settingsRetriever = $this->mockSettingsRetriever();
+        $decorator = $this->mockGetHeadersDecorator();
+        $dummyUploader = new DummyUploader($settingsRetriever, [], $decorator);
+        $this->assertTrue(true);
     }
 
     public function testSetFileWithoutDir()
     {
         $file = new File(self::SOURCE_DIR . 'test.txt');
-        $this->setExpectedException(FileException::class, 'Remote upload directory not set. Call setUploadDir() first');
+        $this->expectException(FileException::class);
+        $this->expectExceptionMessage('Remote upload directory not set. Call setUploadDir() first');
         $this->dummyUploader->setFile($file);
     }
 
@@ -71,25 +64,30 @@ class UploaderTest extends \PHPUnit_Framework_TestCase
     {
         $file = new File(self::SOURCE_DIR . 'my_image.jpg');
         $this->dummyUploader->setUploadDir('destination_dir');
-        $this->setExpectedException(FileException::class, 'File type is not allowed');
+        $this->expectException(FileException::class);
+        $this->expectExceptionMessage('File type is not allowed');
         $this->dummyUploader->setFile($file);
     }
 
     public function testBadFileSize()
     {
         $this->settings['allowed_upload_types'][] = 'image/jpeg';
-        $dummyUploader = new DummyUploader(null, $this->settings, $this->decorator);
+        $decorator = $this->mockGetHeadersDecorator();
+        $dummyUploader = new DummyUploader(null, $this->settings, $decorator);
         $file = new File(self::SOURCE_DIR . 'my_image.jpg');
         $dummyUploader->setUploadDir('destination_dir');
-        $this->setExpectedException(FileException::class, 'File cannot be bigger than 1000 bytes');
+        $this->expectException(FileException::class);
+        $this->expectExceptionMessage('File cannot be bigger than 1000 bytes');
         $dummyUploader->setFile($file);
     }
 
     public function testMissingSetting()
     {
         unset($this->settings['destination_dir']);
-        $dummyUploader = new DummyUploader(null, $this->settings, $this->decorator);
-        $this->setExpectedException(\RuntimeException::class, 'Setting destination_dir not found');
+        $decorator = $this->mockGetHeadersDecorator();
+        $dummyUploader = new DummyUploader(null, $this->settings, $decorator);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Setting destination_dir not found');
         $dummyUploader->setUploadDir('destination_dir');
     }
 
@@ -122,13 +120,16 @@ class UploaderTest extends \PHPUnit_Framework_TestCase
 
     public function testUnsuccessfulUpload()
     {
-        $this->mockGetHeadersDecorator(false);
-        $dummyUploader = new DummyUploader(null, $this->settings, $this->decorator);
-        $file = new File(self::SOURCE_DIR . 'test.txt');
+        $decorator = $this->mockGetHeadersDecorator(false);
+        $dummyUploader = new DummyUploader(null, $this->settings, $decorator);
+        $filename = self::SOURCE_DIR . 'test.txt';
+        $file = new File($filename);
         $dummyUploader->setUploadDir('destination_dir');
         $dummyUploader->setFile($file);
         $newUrl = $dummyUploader->upload();
-        $this->setExpectedException(FileException::class, 'File did not upload correctly');
+        $this->expectException(FileException::class);
+        $newFilename = str_replace('source', 'destination', $filename);
+        $this->expectExceptionMessage("File $newFilename did not upload correctly");
         $dummyUploader->checkIfSuccessful();
     }
 
@@ -145,32 +146,25 @@ class UploaderTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    protected function mockGetHeadersDecorator($isSuccessful = true)
+    private function mockGetHeadersDecorator($isSuccessful = true)
     {
-        $this->decorator = $this
-            ->getMockBuilder(GetHeadersDecorator::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        $decorator = $this->createMock(GetHeadersDecorator::class);
         if ($isSuccessful) {
-            $this->decorator->expects($this->any())
-                ->method('getHeaders')
-                ->will($this->returnCallback([$this, 'getHeadersCallback']));
-            return;
+            $decorator->method('getHeaders')
+                ->willReturnCallback([$this, 'getHeadersCallback']);
+            return $decorator;
         }
-        $this->decorator->expects($this->any())
-            ->method('getHeaders')
-            ->will($this->returnCallback([$this, 'getHeadersFailureCallback']));
+        $decorator->method('getHeaders')
+            ->willReturnCallback([$this, 'getHeadersFailureCallback']);
+        return $decorator;
     }
 
-    protected function mockSettingsRetriever()
+    private function mockSettingsRetriever()
     {
-        $this->settingsRetriever = $this
-            ->getMockBuilder(self::SETTINGS_CLASS_NAME)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->settingsRetriever->expects($this->any())
-            ->method('get')
+        $settingsRetriever = $this->createMock(SettingsRetriever::class);
+        $settingsRetriever->method('get')
             ->will($this->returnCallback([$this, 'getMockedSettingValueCallback']));
+        return $settingsRetriever;
     }
 
     public function getMockedSettingValueCallback($settingName)

@@ -2,10 +2,7 @@ About
 =====
 
 This small library (not a bundle!) simplifies uploading files to an external resource via
-an API. Despite its name, it does not really depend on Symfony, its sole dependency is
-Symfony's HTTP Foundation component that is also used in such projects as Laravel and Drupal 8.
-If you are using it in a Symfony project, it is recommended, though not mandatory, to
-install [VKRSettingsBundle](https://github.com/wladislavk/SettingsBundle).
+an API. Since version 1.1, this library depends on Symfony.
 
 This library does not do anything by itself, it is designed to be extended by other
 bundles or libraries.

@@ -4,6 +4,7 @@ namespace VKR\SymfonyWebUploader\Services;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use VKR\SettingsBundle\Services\SettingsRetriever;
 use VKR\SymfonyWebUploader\Decorators\GetHeadersDecorator;
 use VKR\SymfonyWebUploader\Interfaces\NameChangerInterface;
 
@@ -14,19 +15,9 @@ use VKR\SymfonyWebUploader\Interfaces\NameChangerInterface;
 abstract class AbstractUploader
 {
     /**
-     * @var GetHeadersDecorator
-     */
-    protected $decorator;
-
-    /**
      * @var null|object
      */
     protected $settingsRetriever;
-
-    /**
-     * @var array
-     */
-    protected $settings;
 
     /**
      * URL of remote destination folder
@@ -48,6 +39,16 @@ abstract class AbstractUploader
     protected $filename;
 
     /**
+     * @var GetHeadersDecorator
+     */
+    private $decorator;
+
+    /**
+     * @var array
+     */
+    private $settings;
+
+    /**
      * @param object|null $settingsRetriever
      * @param array $settings
      * @param GetHeadersDecorator|null $decorator
@@ -57,11 +58,9 @@ abstract class AbstractUploader
         $settingsRetriever = null,
         array $settings = [],
         GetHeadersDecorator $decorator = null
-    )
-    {
-        $settingsClassName = 'VKR\SettingsBundle\Services\SettingsRetriever';
-        if (class_exists($settingsClassName) && is_a($settingsRetriever, $settingsClassName)) {
-            $this->settingsRetriever = $settingsRetriever;
+    ) {
+        if (is_a($settingsRetriever, SettingsRetriever::class)) {
+            $this->settingsRetriever = SettingsRetriever::class;
         }
         if (!$this->settingsRetriever && !sizeof($settings)) {
             throw new \RuntimeException('Either $settingsRetriever or $settings must be defined');
@@ -164,7 +163,7 @@ abstract class AbstractUploader
      * @param int|null $format
      * @return array
      */
-    protected function getHeaders($uploadedFileUrl, $format)
+    private function getHeaders($uploadedFileUrl, $format)
     {
         if ($this->decorator) {
             return $this->decorator->getHeaders($uploadedFileUrl, $format);
@@ -178,7 +177,7 @@ abstract class AbstractUploader
      * @return bool|string
      * @throws \RuntimeException
      */
-    protected function getSetting($settingName, $suppressErrors = false)
+    private function getSetting($settingName, $suppressErrors = false)
     {
         if ($this->settingsRetriever) {
             return $this->settingsRetriever->get($settingName, $suppressErrors);
@@ -199,7 +198,7 @@ abstract class AbstractUploader
      *
      * @throws FileException
      */
-    protected function checkMimeType()
+    private function checkMimeType()
     {
         $allowedTypes = $this->getSetting('allowed_upload_types', true);
         if (is_string($allowedTypes) && strlen($allowedTypes)) {
@@ -218,7 +217,7 @@ abstract class AbstractUploader
      *
      * @throws FileException
      */
-    protected function checkSize()
+    private function checkSize()
     {
         $allowedSize = intval($this->getSetting('allowed_upload_size', true));
         if ($allowedSize) {
