@@ -15,7 +15,7 @@ use VKR\SymfonyWebUploader\Interfaces\NameChangerInterface;
 abstract class AbstractUploader
 {
     /**
-     * @var null|object
+     * @var null|SettingsRetriever
      */
     protected $settingsRetriever;
 
@@ -60,7 +60,7 @@ abstract class AbstractUploader
         GetHeadersDecorator $decorator = null
     ) {
         if (is_a($settingsRetriever, SettingsRetriever::class)) {
-            $this->settingsRetriever = SettingsRetriever::class;
+            $this->settingsRetriever = $settingsRetriever;
         }
         if (!$this->settingsRetriever && !sizeof($settings)) {
             throw new \RuntimeException('Either $settingsRetriever or $settings must be defined');
