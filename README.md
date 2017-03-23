@@ -2,7 +2,7 @@ About
 =====
 
 This small library (not a bundle!) simplifies uploading files to an external resource via
-an API. Since version 1.1, this library depends on Symfony.
+an API. Since version 1.2, this library depends on Symfony.
 
 This library does not do anything by itself, it is designed to be extended by other
 bundles or libraries.
